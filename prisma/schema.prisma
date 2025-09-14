@@ -1,0 +1,79 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  TENANT
+  PROPERTY_OWNER
+}
+
+enum KycStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  OVERDUE
+  PARTIAL
+  CANCELLED
+}
+
+model User {
+  id                   Int                   @id @default(autoincrement())
+  name                 String
+  email                String                @unique
+  passwordHash         String
+  phoneNumber          String                @unique
+  isActive             Boolean               @default(true)
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  propertyOwnerProfile PropertyOwnerProfile?
+  adminProfile         AdminProfile?
+  role                 Role
+
+  @@index([email])
+  @@index([phoneNumber])
+  @@index([isActive])
+}
+
+model AdminProfile {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @unique
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PropertyOwnerProfile {
+  id                Int       @id @default(autoincrement())
+  userId            Int       @unique
+  user              User      @relation(fields: [userId], references: [id])
+  aadharNumber      String?   @unique
+  panNumber         String?   @unique
+  KycStatus         KycStatus @default(PENDING)
+  KycVerifiedAt     DateTime?
+  businessName      String?
+  ownershipType     String?
+  gstNumber         String?   @unique
+  city              String?
+  state             String?
+  pincode           String?
+  country           String    @default("India")
+  bankAccountNumber String?
+  bankIFSC          String?
+  bankName          String?
+  upiId             String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+}
+
+
