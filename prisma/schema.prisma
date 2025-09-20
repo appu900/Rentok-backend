@@ -27,12 +27,20 @@ enum PaymentStatus {
   CANCELLED
 }
 
+enum RoomSharingType {
+  SINGLE
+  DOUBLE
+  TRIPLE
+  QUAD
+}
+
 model User {
   id                   Int                   @id @default(autoincrement())
   name                 String
   email                String                @unique
   passwordHash         String
   phoneNumber          String                @unique
+  whatsappNumber       String?
   isActive             Boolean               @default(true)
   createdAt            DateTime              @default(now())
   updatedAt            DateTime              @updatedAt
@@ -54,26 +62,76 @@ model AdminProfile {
 }
 
 model PropertyOwnerProfile {
-  id                Int       @id @default(autoincrement())
-  userId            Int       @unique
-  user              User      @relation(fields: [userId], references: [id])
-  aadharNumber      String?   @unique
-  panNumber         String?   @unique
-  KycStatus         KycStatus @default(PENDING)
-  KycVerifiedAt     DateTime?
-  businessName      String?
-  ownershipType     String?
-  gstNumber         String?   @unique
-  city              String?
-  state             String?
-  pincode           String?
-  country           String    @default("India")
-  bankAccountNumber String?
-  bankIFSC          String?
-  bankName          String?
-  upiId             String?
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  id            Int        @id @default(autoincrement())
+  userId        Int        @unique
+  user          User       @relation(fields: [userId], references: [id])
+  aadharNumber  String?    @unique
+  panNumber     String?    @unique
+  KycStatus     KycStatus  @default(PENDING)
+  KycVerifiedAt DateTime?
+  businessName  String?
+  ownershipType String?
+  gstNumber     String?    @unique
+  city          String?
+  state         String?
+  pincode       String?
+  country       String     @default("India")
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  properties    Property[]
 }
 
+model Property {
+  id                Int                  @id @default(autoincrement())
+  propertyOwnerId   Int
+  propertyOwnerName String
+  pincode           String
+  referralCode      String?
+  ownerName         String
+  city              String?
+  state             String?
+  country           String?
+  totalFloors       Int                  @default(1)
+  isActive          Boolean              @default(true)
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+  image             String?
+  propertyOwner     PropertyOwnerProfile @relation(fields: [propertyOwnerId], references: [id], onDelete: Cascade)
+  floors            Floor[]
 
+  // relations
+}
+
+model Floor {
+  id            Int      @id @default(autoincrement())
+  propertyId    Int
+  whichFloor    Int
+  numberOfRooms Int
+  isActive      Boolean  @default(true)
+  craetedAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  rooms    Room[]
+
+  @@index([propertyId])
+}
+
+model Room {
+  id                Int             @id @default(autoincrement())
+  floorId           Int
+  roomNumber        String?
+  roomType          RoomSharingType
+  maxOccupancy      Int?
+  currectOccupancy  Int             @default(0)
+  noOfBeds          Int?
+  maintenanceCharge Decimal         @default(0.0)
+  isActive          Boolean         @default(true)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  floor Floor @relation(fields: [floorId], references: [id], onDelete: Cascade)
+
+  @@index([floorId])
+  @@index([isActive, currectOccupancy])
+}
